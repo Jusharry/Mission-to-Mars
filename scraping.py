@@ -3,65 +3,101 @@
 
 
 
-# Import Splinter and BeautifulSoup
+# Import dependencies
 from splinter import Browser
 from bs4 import BeautifulSoup as soup
 from webdriver_manager.chrome import ChromeDriverManager
 import pandas as pd
+import datetime as dt
 
-executable_path = {'executable_path': ChromeDriverManager().install()}
-browser = Browser('chrome', **executable_path, headless=False)
+def scrape_all():
+    #Initiates the headless driver for deployment 
+    #browser currently set to visible i.e headless=False
+    executable_path = {'executable_path': ChromeDriverManager().install()}
+    browser = Browser('chrome', **executable_path, headless=False)
+    news_title, news_p = mars_news(browser)
+    #Run scraping functions and save in a dictionary
+    data = {
+        "news_title": news_title,
+        "news_paragraph": news_p,
+        "featured_image":featured_image(browser),
+        "facts": mars_facts(),
+        "last_modified": dt.datetime.now()
+    }
+    #Stop webdriver and return data
+    browser.quit()
+    return data
 
-# Visit the mars nasa news site
-url = 'https://redplanetscience.com'
-browser.visit(url)
-# Optional delay for loading the page
-browser.is_element_present_by_css('div.list_text', wait_time=1)
+#use the foll. code as a function 
+def mars_news(browser):
 
-# ## Nasa Mars News Site
+    #Scrape mars news
+    # Visit the mars nasa news site
+    url = 'https://redplanetscience.com'
+    browser.visit(url)
+    # Optional delay for loading the page
+    browser.is_element_present_by_css('div.list_text', wait_time=1)
 
-html = browser.html
-news_soup = soup(html, 'html.parser')
-#.select_one tells Splinter to select the first/most recent item
-slide_elem = news_soup.select_one('div.list_text')
-slide_elem.find('div', class_= 'content_title')
+    # ## Nasa Mars News Site
 
-news_title = slide_elem.find('div', class_= 'content_title').get_text()
-news_title
+    html = browser.html
+    news_soup = soup(html, 'html.parser')
+    #.select_one tells Splinter to select the first/most recent item
+    try:
+        slide_elem = news_soup.select_one('div.list_text')
+        slide_elem.find('div', class_= 'content_title')
 
-news_p = slide_elem.find('div', class_= 'article_teaser_body').get_text()
-news_p
+        # Use the parent element to find the first 'a' tag and save it as 'news_title'
+        news_title = slide_elem.find('div', class_= 'content_title').get_text()
+        #news_title
 
+        # Use the parent element to find the paragraph text
+        news_p = slide_elem.find('div', class_= 'article_teaser_body').get_text()
+        #news_p
+    except AttributeError:
+        return None,None
+    return news_title, news_p
 
-# ### *Featured Images* 
+#Featured Images 
+def featured_image(browser):
+    # Visit URL
+    url = 'https://spaceimages-mars.com'
+    browser.visit(url)
 
-# Visit URL
-url = 'https://spaceimages-mars.com'
-browser.visit(url)
+    #Find and click the full image button which is actually the 2nd button [1]
+    full_image_elem = browser.find_by_tag('button')[1]
+    full_image_elem.click()
 
-#Find and click the full image button which is actually the 2nd button [1]
-full_image_elem = browser.find_by_tag('button')[1]
-full_image_elem.click()
+    html = browser.html
+    img_soup = soup(html, 'html.parser')
+    try:
+        #Use the parser to find the correct class and then use the .get() to pull what is in the src 
+        img_url_rel = img_soup.find('img', class_ = 'fancybox-image').get('src')
+        #img_url_rel
+    except AttributeError:
+        return None
+    # Use the base URL to create an absolute URL
+    img_url = f'https://spaceimages-mars.com/{img_url_rel}'
+    #img_url
 
-html = browser.html
-img_soup = soup(html, 'html.parser')
+    return img_url
+def mars_facts():
+    try:
+    #use read_html to scrape the facts table into a df
+        df = pd.read_html('https://galaxyfacts-mars.com')[0]
+    except BaseException:
+        return None
+    #Assign columns and set index of df
+    df.columns= ['description','Mars', 'Earth']
+    df.set_index('description',inplace=True)
 
-#Use the parser to find the correct class and then use the .get() to pull what is in the src 
-img_url_rel = img_soup.find('img', class_ = 'fancybox-image').get('src')
-img_url_rel
+    #Convert df to html format , add bootstrap
+    return df.to_html()
+  
+if __name__ == "__main__":
+    #If running as script print scraped data
+    print(scrape_all())
 
-# Use the base URL to create an absolute URL
-img_url = f'https://spaceimages-mars.com/{img_url_rel}'
-img_url
-
-df = pd.read_html('https://galaxyfacts-mars.com')[0]
-df.columns= ['description','Mars', 'Earth']
-df.set_index('description',inplace=True)
-df
-
-df.to_html()
-
-browser.quit()
 
 
 
