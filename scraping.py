@@ -4,6 +4,7 @@
 
 
 # Import dependencies
+from bs4.builder import HTML
 from splinter import Browser
 from bs4 import BeautifulSoup as soup
 from webdriver_manager.chrome import ChromeDriverManager
@@ -14,15 +15,17 @@ def scrape_all():
     #Initiates the headless driver for deployment 
     #browser currently set to visible i.e headless=False
     executable_path = {'executable_path': ChromeDriverManager().install()}
-    browser = Browser('chrome', **executable_path, headless=False)
+    browser = Browser('chrome', **executable_path, headless=True)
     news_title, news_p = mars_news(browser)
+    hemisphere_image_urls = hemispheres(browser)
     #Run scraping functions and save in a dictionary
     data = {
         "news_title": news_title,
         "news_paragraph": news_p,
         "featured_image":featured_image(browser),
-        "facts": mars_facts(),
-        "last_modified": dt.datetime.now()
+        "facts": mars_facts(browser),
+        "last_modified": dt.datetime.now(),
+        "hemispheres":hemisphere_image_urls
     }
     #Stop webdriver and return data
     browser.quit()
@@ -92,8 +95,37 @@ def mars_facts():
     df.set_index('description',inplace=True)
 
     #Convert df to html format , add bootstrap
-    return df.to_html()
-  
+    return HTML(df.to_html(classes='table table-striped table-hover'))
+
+def hemispheres(browser):
+    url = 'https://marshemispheres.com/'
+    browser.visit(url)
+    browser.is_element_present_by_css('div.full-content', wait_time=1)
+
+
+    # 2. Create a list to hold the images and titles.
+    hemisphere_image_urls = []
+
+    # 3. Write code to retrieve the image urls and titles for each hemisphere.
+    #results= browser.find_by_css('div#product-section.result-list')
+    results = browser.find_by_css('a.product-item img')
+
+    for result in range(len(results)):
+        
+        #title= browser.find_by_css('a.itemLink.product-item h3').text.strip()
+        # link = browser.find_by_css('div.description a').click()
+        title= browser.find_by_css('a.product-item h3')[result].text.strip()
+        link =  browser.find_by_css('a.product-item img')[result].click()
+        rel_img_url = browser.find_by_css('div.downloads a')['href']
+        hemispheres = {
+                'title': title,
+                'img_url':rel_img_url
+            }
+            
+        browser.back()
+        hemisphere_image_urls.append(hemispheres)
+    return hemisphere_image_urls
+
 if __name__ == "__main__":
     #If running as script print scraped data
     print(scrape_all())
