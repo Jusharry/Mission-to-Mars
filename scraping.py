@@ -4,7 +4,7 @@
 
 
 # Import dependencies
-from bs4.builder import HTML
+#from bs4.builder import HTML
 from splinter import Browser
 from bs4 import BeautifulSoup as soup
 from webdriver_manager.chrome import ChromeDriverManager
@@ -23,7 +23,7 @@ def scrape_all():
         "news_title": news_title,
         "news_paragraph": news_p,
         "featured_image":featured_image(browser),
-        "facts": mars_facts(browser),
+        "facts": mars_facts(),
         "last_modified": dt.datetime.now(),
         "hemispheres":hemisphere_image_urls
     }
@@ -95,7 +95,7 @@ def mars_facts():
     df.set_index('description',inplace=True)
 
     #Convert df to html format , add bootstrap
-    return HTML(df.to_html(classes='table table-striped'))
+    return df.to_html()
 
 def hemispheres(browser):
     url = 'https://marshemispheres.com/'
