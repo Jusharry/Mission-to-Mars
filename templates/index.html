@@ -40,7 +40,7 @@
             <h2 class = 'text-center'>Featured Mars Image</h2>
            <!-- if images is False/None/non-existent, then default to error message -->
           <img src="{{mars.featured_image | default('static/images/error.png', true) }} "
-            class="img-responsive"
+            class="img-responsive center-block"
             alt="Responsive image"
           />
         </div>
@@ -54,7 +54,7 @@
           </div>
 
       <!-- Section for Mars Hemispheres -->
-      <section class="fragment fragmnet-two bg-success text-warning">
+      <section class="fragment fragment-two bg-success text-warning">
         <div class="row" id="mars-hemispheres">
           <div class="page-header">
             <h2 class="text-center">Mars Hemispheres</h2>

@@ -72,7 +72,7 @@ df = pd.read_html('https://galaxyfacts-mars.com')[0]
 df.columns= ['description','Mars', 'Earth']
 df.set_index('description',inplace=True)
 df
-df.to_html(classes='table table-striped table-hover')
+df.to_html()
 
 
 

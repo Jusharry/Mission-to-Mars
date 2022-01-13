@@ -95,7 +95,7 @@ def mars_facts():
     df.set_index('description',inplace=True)
 
     #Convert df to html format , add bootstrap
-    return HTML(df.to_html(classes='table table-striped table-hover'))
+    return HTML(df.to_html(classes='table table-striped'))
 
 def hemispheres(browser):
     url = 'https://marshemispheres.com/'
